@@ -79,7 +79,6 @@ local = dataset.get_local_copy()
 │  Dump       │     │   Clean     │     │   Labels    │
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
-
 ## Feature Extraction Options
 
 | Feature | Dimensions | Notes |
@@ -90,6 +89,7 @@ local = dataset.get_local_copy()
 | wav2vec2 | (768, T) | Pre-trained, temporal |
 
 Start with mel spectrograms for simplicity, consider CLAP for transfer learning.
+
 
 
 

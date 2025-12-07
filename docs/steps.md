@@ -881,7 +881,6 @@ model.update_weights("best_model.pt")
 # Deploy (ClearML Serving handles the rest)
 # Access at https://clearml.home.shdr.ch/serving/eno
 ```
-
 **✓ Final Checkpoint**:
 
 - [ ] Model makes reasonable predictions on new audio
@@ -923,3 +922,4 @@ model.update_weights("best_model.pt")
 ---
 
 _You've got this! 🎧_
+
