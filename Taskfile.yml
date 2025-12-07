@@ -1,0 +1,111 @@
+version: '3'
+
+vars:
+  IMAGE_NAME: localhost/eno
+  OUTPUT_DIR: /mnt/nfs/nvme/data/ml/eno/raw/metadata
+
+tasks:
+  "lute:proto":
+    desc: Fetch latest lute.proto from upstream
+    cmds:
+      - mkdir -p proto
+      - curl -fsSL https://raw.githubusercontent.com/shedrachokonofua/lute/main/proto/lute.proto -o proto/lute.proto
+    generates:
+      - proto/lute.proto
+
+  build:
+    desc: Build the eno container (extract, grpcurl, duckdb)
+    cmds:
+      - podman build -t {{.IMAGE_NAME}}:latest -f Containerfile .
+    sources:
+      - Containerfile
+      - proto/lute.proto
+      - scripts/extract_from_lute.py
+      - scripts/duckdb_query.py
+
+  extract:
+    desc: Extract album data from lute event stream to Parquet
+    deps: [build]
+    cmds:
+      - |
+        podman run --rm \
+          -v {{.OUTPUT_DIR}}:/output:z \
+          {{.IMAGE_NAME}}:latest
+
+  "lute:grpcurl":
+    desc: "Run grpcurl against lute (usage: task lute:grpcurl -- list)"
+    deps: [build]
+    cmds:
+      - |
+        podman run --rm \
+          --entrypoint grpcurl \
+          -w /app/proto \
+          {{.IMAGE_NAME}}:latest \
+          -import-path /app/proto -proto lute.proto \
+          core.lute.home.shdr.ch:443 \
+          {{.CLI_ARGS}}
+
+  reset-cursor:
+    desc: Reset eno-extractor event cursor to start from beginning
+    deps: [build]
+    cmds:
+      - |
+        podman run --rm \
+          --entrypoint grpcurl \
+          -w /app/proto \
+          {{.IMAGE_NAME}}:latest \
+          -import-path /app/proto -proto lute.proto \
+          -d '{"subscriber_id": "eno-extractor"}' \
+          core.lute.home.shdr.ch:443 \
+          lute.EventService/DeleteCursor
+
+  duckdb:
+    desc: "Run duckdb query (usage: task duckdb -- \"SELECT count(*) FROM '/data/albums.parquet'\")"
+    deps: [build]
+    cmds:
+      - |
+        podman run --rm \
+          -v {{.OUTPUT_DIR}}:/data:z \
+          --entrypoint python \
+          {{.IMAGE_NAME}}:latest \
+          /app/duckdb_query.py "{{.CLI_ARGS}}"
+
+  stats:
+    desc: Show unique label counts from albums
+    deps: [build]
+    cmds:
+      - |
+        podman run --rm \
+          -v {{.OUTPUT_DIR}}:/data:z \
+          --entrypoint python \
+          {{.IMAGE_NAME}}:latest \
+          /app/duckdb_query.py "WITH
+            pg AS (SELECT DISTINCT unnest(primary_genres) as g FROM '/data/albums.parquet'),
+            sg AS (SELECT DISTINCT unnest(secondary_genres) as g FROM '/data/albums.parquet'),
+            ds AS (SELECT DISTINCT unnest(descriptors) as d FROM '/data/albums.parquet')
+          SELECT
+            (SELECT count(*) FROM '/data/albums.parquet') as albums,
+            (SELECT count(*) FROM pg) as unique_primary,
+            (SELECT count(*) FROM sg) as unique_secondary,
+            (SELECT count(*) FROM ds) as unique_descriptors"
+
+  shell:
+    desc: Open shell in the container for debugging
+    deps: [build]
+    cmds:
+      - |
+        podman run --rm -it \
+          -v {{.OUTPUT_DIR}}:/output:z \
+          --entrypoint /bin/bash \
+          {{.IMAGE_NAME}}:latest
+
+  clean:
+    desc: Remove built images
+    cmds:
+      - podman rmi {{.IMAGE_NAME}}:latest || true
+
+  help:
+    desc: Show available tasks
+    cmds:
+      - task --list
+

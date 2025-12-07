@@ -1,0 +1,17 @@
+# Ignore everything except what we need
+*
+
+# Include only necessary files
+!proto/
+!scripts/extract_from_lute.py
+!scripts/duckdb_query.py
+!pyproject.toml
+
+# Ignore common patterns
+**/__pycache__/
+**/*.pyc
+**/.git/
+**/.venv/
+**/node_modules/
+
+

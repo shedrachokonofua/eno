@@ -4,7 +4,16 @@ version = "0.1.0"
 description = "Predicts music tags from audio using RYM metadata"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["torch>=2.2.0", "torchaudio>=2.2.0", "clearml>=1.14.0"]
+dependencies = [
+    "torch>=2.2.0",
+    "torchaudio>=2.2.0",
+    "clearml>=1.14.0",
+    "grpcio>=1.60.0",
+    "grpcio-tools>=1.60.0",
+    "protobuf>=4.25.0",
+    "pandas>=2.1.0",
+    "pyarrow>=14.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]

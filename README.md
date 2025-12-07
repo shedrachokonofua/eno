@@ -1,51 +1,87 @@
 # eno
 
-Predicts music tags from audio.
-
-Trained on 300k albums of RYM metadata, it generates descriptors (e.g., "melancholic", "atmospheric") and genres (e.g., "shoegaze", "post-rock") for any track.
-
-Named after Brian Eno.
-
-## Documentation
-
-- [Project Structure & Workflow](docs/PROJECT.md) — Architecture, development workflow, ClearML integration
-- [Aether Infrastructure](docs/AETHER.md) — Relevant homelab specs and endpoints
-- [Data](docs/DATA.md) — Dataset organization and pipeline
+> Predicts music tags from audio. Trained on 300k albums of RYM metadata, it generates descriptors (e.g., "melancholic", "atmospheric") and genres (e.g., "shoegaze", "post-rock") for any track. Named after Brian Eno.
 
 ## Quick Start
 
+### 1. Extract Data from Lute
+
 ```bash
-# 1. Clone and setup
-git clone git@gitlab.home.shdr.ch:shdrch/eno.git
-cd eno
-uv sync  # or pip install -e .
+# Build and extract
+task build
+task extract
 
-# 2. Configure ClearML
-clearml-init
-# Web: https://clearml.home.shdr.ch
-# API: https://api.clearml.home.shdr.ch
-# Files: https://files.clearml.home.shdr.ch
+# Or directly with podman
+podman run --rm \
+  -v /mnt/nfs/nvme/data/ml/eno/raw/metadata:/output:z \
+  localhost/eno:latest
+```
 
-# 3. Explore in Jupyter
-# Open https://jupyter.home.shdr.ch
+Configuration is hardcoded in `scripts/extract_from_lute.py` - edit and rebuild to change.
 
-# 4. Train
-python scripts/train.py --config configs/small.yaml
+### 2. Explore Data
 
-# 5. Queue to GPU
-clearml-task --project eno/training --name experiment \
-    --script scripts/train.py \
-    --queue default
+Open JupyterLab at `https://jupyter.home.shdr.ch` and run:
+
+```python
+import pandas as pd
+df = pd.read_parquet("/mnt/nfs/nvme/data/ml/eno/raw/metadata/albums.parquet")
+print(f"Loaded {len(df)} albums")
+df.head()
+```
+
+### 3. Next Steps
+
+- See `docs/EXTRACTION.md` for data extraction details
+- See `docs/STEPS.md` for the full ML pipeline walkthrough
+- See `docs/PROJECT.md` for architecture overview
+
+## Project Structure
+
+```
+eno/
+├── Containerfile           # Lute extraction container
+├── Taskfile.yml           # Task automation (podman commands)
+├── pyproject.toml         # Python dependencies
+├── docs/                  # Documentation
+├── notebooks/             # Jupyter exploration
+├── scripts/               # Extraction & training scripts
+│   └── extract_from_lute.py
+├── proto/                 # Lute protobuf definitions
+│   └── lute.proto
+└── src/eno/              # Main package (TBD)
 ```
 
 ## Infrastructure
 
-Built on [aether](https://gitlab.home.shdr.ch/aether/aether) home lab:
+- **Development**: dev-workstation (Fedora, Cursor IDE)
+- **Training**: gpu-workstation (RTX Pro 6000, 64GB RAM)
+- **Storage**: Smith NFS (10Gbps, /mnt/nfs/nvme/data/ml/eno/)
+- **Services**: ClearML, JupyterLab (see `docs/AETHER.md`)
 
-- **gpu-workstation** — RTX Pro 6000, hosts ClearML + JupyterLab
-- **dev-workstation** — Code editing with Cursor
-- **smith** — NFS storage for datasets
+## Tech Stack
 
+| Component | Tool |
+|-----------|------|
+| Data Extraction | gRPC → Parquet |
+| Audio Processing | torchaudio |
+| Model Framework | PyTorch |
+| Experiment Tracking | ClearML |
+| Containerization | Podman |
+| Task Automation | Task |
 
+## Development Workflow
 
+1. **Extract** → Get album metadata from lute
+2. **Explore** → Analyze data in Jupyter
+3. **Prototype** → Test models in notebooks
+4. **Train** → Queue GPU jobs via ClearML
+5. **Serve** → Deploy via ClearML Serving
 
+See `docs/PROJECT.md` for detailed workflow.
+
+## References
+
+- [Lute](https://github.com/shedrachokonofua/lute) - RYM metadata source
+- [RateYourMusic](https://rateyourmusic.com) - Original data source
+- [ClearML](https://clear.ml) - Experiment tracking

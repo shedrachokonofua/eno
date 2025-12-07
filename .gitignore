@@ -1,75 +1,66 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Distribution / packaging
-dist/
+*.so
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
+.installed.cfg
 *.egg
 
 # Virtual environments
 .venv/
 venv/
 ENV/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-.cursor/
+env/
 
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# ML artifacts (keep models in ClearML, not git)
+# Proto (fetched from upstream)
+proto/lute.proto
+
+# Generated proto files (if building locally)
+src/eno/lute_pb2.py
+src/eno/lute_pb2_grpc.py
+src/eno/lute_pb2.pyi
+
+# Data (don't commit datasets)
+data/
+test-output/
+*.parquet
+*.npy
+*.h5
 *.pt
 *.pth
 *.ckpt
-*.safetensors
-*.onnx
-
-# Data files (stored on NFS, versioned in ClearML)
-*.npy
-*.npz
-*.h5
-*.hdf5
-*.parquet
-*.csv
-*.json
-!configs/*.yaml
-
-# Audio files
-*.wav
-*.mp3
-*.flac
-*.ogg
-*.m4a
-
-# Logs
-*.log
-logs/
-lightning_logs/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# ClearML
-clearml.conf
-
-# Misc
-*.bak
-*.tmp
-
-
-
+# Cache
+.cache/
+.pytest_cache/
+.task/
+*.log
